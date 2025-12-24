@@ -17,6 +17,9 @@
             overflow: hidden;
             width: 100vw;
             height: 100vh;
+            /* Enable hardware acceleration */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
         
         .header {
@@ -30,39 +33,26 @@
             align-items: center;
             justify-content: center;
             background: #000;
-        }
-        
-        #game-embed {
-            width: 720px;
-            height: 480px;
-            border: 3px solid #333;
-            border-radius: 8px;
-            display: block;
-        }
-        
-        .controls {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            text-align: center;
+            /* Hardware acceleration */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
         
         #game-embed {
             width: 100vw;
             height: 100vh;
             display: block;
+            /* Performance optimizations */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
         
         .controls,
         .nav-buttons {
             display: none;
-        }
-            }
-            
-            .header h1 {
-                font-size: 1.8em;
-            }
         }
     </style>
 </head>
@@ -98,9 +88,33 @@
             "autoplay": "auto",
             "unmuteOverlay": "hidden",
             "backgroundColor": "#37528C",
-            "letterbox": "on",
-            "warnOnUnsupportedContent": false
+            "letterbox": "fullscreen",
+            "warnOnUnsupportedContent": false,
+            "quality": "high",
+            "scale": "showAll",
+            "forceScale": true,
+            "upgradeToHttps": true,
+            "maxExecutionDuration": {"secs": 15, "nanos": 0},
+            "logLevel": "error",
+            "showSwfDownload": false,
+            "contextMenu": false,
+            "preloader": true,
+            "splashScreen": true,
+            "favorFlash": false
         };
+        
+        // Force Ruffle to use WebGPU/WebGL for better performance
+        window.addEventListener('DOMContentLoaded', () => {
+            const ruffle = window.RufflePlayer.newest();
+            const player = ruffle.createPlayer();
+            const container = document.getElementById('game-embed');
+            container.parentNode.replaceChild(player, container);
+            player.load('/flight-759879f9.swf');
+            
+            // Set to use native resolution for smoother rendering
+            player.style.width = '100vw';
+            player.style.height = '100vh';
+        });
     </script>
 </body>
 </html>
