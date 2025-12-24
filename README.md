@@ -1,28 +1,10 @@
-# Flight - Paper Airplane Game
+# Flight - Original Game
 
-A physics-based paper airplane launching game inspired by the classic Flash game.
+The original Flash game "Flight" by Armor Games, playable via Ruffle emulator.
 
-## Features
+## What's This?
 
-✈️ **Realistic Physics** - Paper airplane flight simulation with Matter.js
-🎯 **Launch Mechanic** - Drag and release to throw with power control
-⬆️ **Flight Controls** - Control pitch and use boost during flight
-💰 **Progression System** - Earn money based on distance and altitude
-🛒 **Upgrade Shop** - Improve speed, weight, aerodynamics, and add fuel
-⭐ **Collectibles** - Gather stars during flight for bonus money
-💾 **Auto-Save** - Progress saved automatically to localStorage
-
-## Controls
-
-### Launching
-- **Click and drag** to aim your paper airplane
-- Longer drag = more power
-- Release to launch!
-
-### During Flight
-- **W / Up Arrow** - Pitch up
-- **S / Down Arrow** - Pitch down
-- **Space** - Use rocket boost (if unlocked)
+This is the original Flash version of Flight, running through Ruffle (a Flash emulator). The game is fully playable offline in your browser.
 
 ## Setup
 
@@ -46,8 +28,20 @@ npm run build
 
 ## Deploy to Vercel
 
+1. Install Vercel CLI:
 ```bash
 npm install -g vercel
+```
+
+2. Deploy:
+```bash
+vercel
+```
+
+## Credits
+
+Original game by Krin Juangbhanich (Armor Games)
+Ruffle emulator by the Ruffle team
 vercel
 ```
 

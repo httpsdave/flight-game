@@ -3,97 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight - Paper Airplane Game</title>
-    <link rel="stylesheet" href="/src/styles/main.css">
+    <title>Flight - Original Game</title>
+    <script src="node_modules/@ruffle-rs/ruffle/ruffle.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .header {
+            display: none;
+        }
+        
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+        
+        #game-embed {
+            width: 720px;
+            height: 480px;
+            border: 3px solid #333;
+            border-radius: 8px;
+            display: block;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        #game-embed {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        
+        .controls,
+        .nav-buttons {
+            display: none;
+        }
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="game-canvas"></canvas>
+    <div class="header">
+        <h1>✈️ Flight - Original Game</h1>
+        <p>The authentic Armor Games classic, running with Ruffle</p>
+    </div>
+    
+    <div class="game-container">
+        <embed id="game-embed" src="flight-759879f9/flight-759879f9.swf" type="application/x-shockwave-flash">
         
-        <!-- HUD Overlay -->
-        <div id="hud" style="display: none;">
-            <div class="hud-top">
-                <div class="stat">Distance: <span id="distance">0</span>m</div>
-                <div class="stat">Money: $<span id="money">0</span></div>
-                <div class="stat">Altitude: <span id="altitude">0</span>m</div>
-            </div>
-            <div class="fuel-bar-container" id="fuel-container" style="display: none;">
-                <div class="fuel-bar" id="fuel-bar"></div>
-            </div>
+        <div class="controls">
+            <h3>🎮 Original Controls</h3>
+            <p><strong>Mouse:</strong> Click & drag to launch the paper plane</p>
+            <p><strong>Arrow Keys / A & D:</strong> Steer the plane (requires Rudder upgrade)</p>
+            <p><strong>Collect:</strong> Stars for money, Paper Cranes for multipliers</p>
         </div>
-
-        <!-- Launch Screen -->
-        <div id="launch-screen" class="screen">
-            <h1>FLIGHT</h1>
-            <p class="instruction">Click and drag to aim, then release to launch!</p>
-            <div class="stats-panel">
-                <h3>Your Paper Airplane</h3>
-                <div class="upgrade-stat">Speed Level: <span id="stat-speed">1</span></div>
-                <div class="upgrade-stat">Weight Level: <span id="stat-weight">1</span></div>
-                <div class="upgrade-stat">Aerodynamics: <span id="stat-aero">1</span></div>
-                <div class="upgrade-stat">Fuel Tanks: <span id="stat-fuel">0</span></div>
-            </div>
-            <button id="start-btn" class="btn-primary">Ready to Launch!</button>
-        </div>
-
-        <!-- Shop Screen -->
-        <div id="shop-screen" class="screen hidden">
-            <h2>Upgrade Shop</h2>
-            <div class="shop-money">Your Money: $<span id="shop-money">0</span></div>
-            
-            <div class="upgrades-container">
-                <div class="upgrade-card">
-                    <h3>Engine Power</h3>
-                    <p>Increases launch velocity and speed</p>
-                    <div class="upgrade-level">Level: <span id="speed-level">1</span></div>
-                    <button class="btn-upgrade" data-upgrade="speed">
-                        Upgrade - $<span id="speed-cost">50</span>
-                    </button>
-                </div>
-
-                <div class="upgrade-card">
-                    <h3>Lightweight Build</h3>
-                    <p>Reduces weight for longer flights</p>
-                    <div class="upgrade-level">Level: <span id="weight-level">1</span></div>
-                    <button class="btn-upgrade" data-upgrade="weight">
-                        Upgrade - $<span id="weight-cost">75</span>
-                    </button>
-                </div>
-
-                <div class="upgrade-card">
-                    <h3>Aerodynamics</h3>
-                    <p>Better control and less air resistance</p>
-                    <div class="upgrade-level">Level: <span id="aero-level">1</span></div>
-                    <button class="btn-upgrade" data-upgrade="aero">
-                        Upgrade - $<span id="aero-cost">100</span>
-                    </button>
-                </div>
-
-                <div class="upgrade-card">
-                    <h3>Rocket Fuel</h3>
-                    <p>Add boost capability during flight</p>
-                    <div class="upgrade-level">Level: <span id="fuel-level">0</span></div>
-                    <button class="btn-upgrade" data-upgrade="fuel">
-                        Unlock - $<span id="fuel-cost">200</span>
-                    </button>
-                </div>
-            </div>
-
-            <button id="fly-again-btn" class="btn-primary">Launch Again!</button>
-        </div>
-
-        <!-- Game Over Screen -->
-        <div id="gameover-screen" class="screen hidden">
-            <h2>Flight Complete!</h2>
-            <div class="results">
-                <div class="result-stat">Distance Traveled: <span id="final-distance">0</span>m</div>
-                <div class="result-stat">Money Earned: $<span id="earned-money">0</span></div>
-                <div class="result-stat">Total Money: $<span id="total-money">0</span></div>
-            </div>
-            <button id="continue-btn" class="btn-primary">Continue to Shop</button>
+        
+        <div class="nav-buttons">
+            <a href="index.html" class="btn">
+                🎮 Play Our Recreation
+            </a>
+            <button onclick="location.reload()" class="btn btn-secondary">
+                🔄 Restart Game
+            </button>
         </div>
     </div>
-
-    <script type="module" src="/src/main.js"></script>
+    
+    <script>
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.RufflePlayer.config = {
+            "autoplay": "auto",
+            "unmuteOverlay": "hidden",
+            "backgroundColor": "#37528C",
+            "letterbox": "on",
+            "warnOnUnsupportedContent": false
+        };
+    </script>
 </body>
 </html>
