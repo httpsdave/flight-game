@@ -8,7 +8,7 @@ class Game {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.engine = Matter.Engine.create();
-        this.engine.gravity.y = 0.4;
+        this.engine.gravity.y = 0.35;
         
         this.player = null;
         this.world = null;
@@ -20,6 +20,13 @@ class Game {
         
         this.camera = { x: 0, y: 0 };
         this.animationId = null;
+        
+        // Wind system
+        this.wind = { x: 0, y: 0 };
+        this.windTimer = 0;
+        
+        // Stars collected this run
+        this.starsCollected = 0;
         
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -58,6 +65,10 @@ class Game {
         this.keys = {};
         window.addEventListener('keydown', (e) => {
             this.keys[e.key.toLowerCase()] = true;
+            // Restart with R key during gameover
+            if (e.key.toLowerCase() === 'r' && this.gameState.state === 'gameover') {
+                this.quickRestart();
+            }
         });
         window.addEventListener('keyup', (e) => {
             this.keys[e.key.toLowerCase()] = false;
@@ -89,20 +100,31 @@ class Game {
         if (distance < 30) return;
         
         const power = Math.min(distance / 80, 4) * this.gameState.upgrades.speed;
-        this.launchPlane(dx * power * 0.08, dy * power * 0.08);
+        this.launchPlane(dx * power * 0.1, dy * power * 0.1);
     }
     
     startLaunchMode() {
         this.gameState.state = 'launching';
         this.camera = { x: 0, y: 0 };
+        this.starsCollected = 0;
         
         const startX = 150;
         const startY = this.canvas.height - 200;
         this.player = new Player(this.engine, startX, startY, this.gameState.upgrades);
         
+        // Render initial frame
+        this.renderLaunchScreen();
+        
         window.dispatchEvent(new CustomEvent('gameStateChange', { 
             detail: { state: 'launching' }
         }));
+    }
+    
+    renderLaunchScreen() {
+        this.world.render(this.ctx, this.camera, this.canvas);
+        if (this.player) {
+            this.player.render(this.ctx);
+        }
     }
     
     launchPlane(vx, vy) {
@@ -113,10 +135,13 @@ class Game {
             distance: 0,
             maxAltitude: 0,
             moneyEarned: 0,
+            starsCollected: 0,
             startTime: Date.now()
         };
         
-        Matter.Body.setVelocity(this.player.body, { x: vx, y: vy });
+        // Ensure upward launch angle
+        const launchVy = Math.min(vy, -2);
+        Matter.Body.setVelocity(this.player.body, { x: Math.max(vx, 5), y: launchVy });
         
         this.startGameLoop();
         
@@ -142,29 +167,57 @@ class Game {
         this.animationId = requestAnimationFrame(gameLoop);
     }
     
+    updateWind(deltaTime) {
+        this.windTimer += deltaTime;
+        if (this.windTimer > 2000) {
+            this.windTimer = 0;
+            // Random wind changes
+            this.wind.x = (Math.random() - 0.5) * 0.0005;
+            this.wind.y = (Math.random() - 0.5) * 0.0003;
+        }
+    }
+    
     update(deltaTime) {
         Matter.Engine.update(this.engine, Math.min(deltaTime, 33));
         
         if (!this.player) return;
         
+        // Update wind
+        this.updateWind(deltaTime);
+        
+        // Apply wind force
+        Matter.Body.applyForce(this.player.body, this.player.body.position, this.wind);
+        
         this.player.handleInput(this.keys);
         this.player.update(deltaTime);
         
         const pos = this.player.body.position;
-        this.camera.x += (pos.x - this.canvas.width / 3 - this.camera.x) * 0.1;
-        this.camera.y += (pos.y - this.canvas.height / 2 - this.camera.y) * 0.1;
+        
+        // Smoother camera follow
+        const targetCamX = pos.x - this.canvas.width / 3;
+        const targetCamY = Math.min(pos.y - this.canvas.height / 2, this.canvas.height / 4);
+        this.camera.x += (targetCamX - this.camera.x) * 0.08;
+        this.camera.y += (targetCamY - this.camera.y) * 0.08;
         
         const distance = Math.max(0, Math.floor(pos.x / 10));
         const altitude = Math.max(0, Math.floor((this.canvas.height - pos.y) / 10));
         
         this.gameState.currentRun.distance = distance;
         this.gameState.currentRun.maxAltitude = Math.max(this.gameState.currentRun.maxAltitude, altitude);
-        this.gameState.currentRun.moneyEarned = Math.floor(distance * 0.1) + Math.floor(altitude * 0.05);
+        
+        // Check star collection
+        const collected = this.world.checkStarCollisions(this.player.body.position);
+        this.starsCollected += collected;
+        this.gameState.currentRun.starsCollected = this.starsCollected;
+        
+        // Money: distance + altitude bonus + stars
+        this.gameState.currentRun.moneyEarned = Math.floor(distance * 0.15) + Math.floor(altitude * 0.05) + (this.starsCollected * 10);
         
         const velocity = this.player.body.velocity;
         const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
         
-        if (speed < 1 && pos.y > this.canvas.height - 50) {
+        // End conditions: slow + on ground OR went off bottom
+        if ((speed < 0.8 && pos.y > this.canvas.height - 80) || pos.y > this.canvas.height + 100) {
             this.endFlight();
         }
         
@@ -239,12 +292,14 @@ class Game {
         
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
+            this.animationId = null;
         }
         
         window.dispatchEvent(new CustomEvent('gameOver', {
             detail: {
                 distance: this.gameState.currentRun.distance,
                 altitude: this.gameState.currentRun.maxAltitude,
+                stars: this.starsCollected,
                 earned: this.gameState.currentRun.moneyEarned,
                 total: this.gameState.money
             }
@@ -253,11 +308,24 @@ class Game {
         this.gameState.saveProgress();
     }
     
+    quickRestart() {
+        // Quick restart without going to shop
+        window.dispatchEvent(new CustomEvent('quickRestart'));
+        this.reset();
+    }
+    
     reset() {
         if (this.player) {
             Matter.World.remove(this.engine.world, this.player.body);
+            this.player = null;
+        }
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
         }
         this.camera = { x: 0, y: 0 };
+        this.starsCollected = 0;
+        this.wind = { x: 0, y: 0 };
         this.world.reset();
         this.startLaunchMode();
     }

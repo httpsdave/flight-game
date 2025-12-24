@@ -60,6 +60,13 @@ class UI {
                 this.elements.hud.style.display = 'block';
             }
         });
+        
+        // Quick restart (R key) - skip game over, go straight to launch
+        window.addEventListener('quickRestart', () => {
+            this.hideGameOverScreen();
+            this.hideShopScreen();
+            this.showLaunchScreen();
+        });
     }
     
     showLaunchScreen() {
