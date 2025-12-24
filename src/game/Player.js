@@ -36,7 +36,7 @@ class Player {
         
         if (speed < 0.3) return;
         
-        // Pitch up - apply lift force
+        // W/Up - Pitch up - apply lift force
         if (keys['w'] || keys['arrowup']) {
             const liftForce = speed * this.liftCoef * this.upgrades.aero;
             Matter.Body.applyForce(this.body, this.body.position, {
@@ -45,7 +45,7 @@ class Player {
             });
         }
         
-        // Pitch down - dive for speed
+        // S/Down - Pitch down - dive for speed
         if (keys['s'] || keys['arrowdown']) {
             Matter.Body.applyForce(this.body, this.body.position, {
                 x: 0.0003,
@@ -53,7 +53,25 @@ class Player {
             });
         }
         
-        // Boost with spacebar
+        // A/Left - Turn left (like rudder in original)
+        if (keys['a'] || keys['arrowleft']) {
+            Matter.Body.applyForce(this.body, this.body.position, {
+                x: -0.0002 * this.upgrades.aero,
+                y: -0.0001
+            });
+            Matter.Body.setAngularVelocity(this.body, this.body.angularVelocity - 0.003);
+        }
+        
+        // D/Right - Turn right
+        if (keys['d'] || keys['arrowright']) {
+            Matter.Body.applyForce(this.body, this.body.position, {
+                x: 0.0004 * this.upgrades.aero,
+                y: -0.00005
+            });
+            Matter.Body.setAngularVelocity(this.body, this.body.angularVelocity + 0.003);
+        }
+        
+        // Boost with spacebar (requires fuel upgrade)
         if ((keys[' '] || keys['space']) && this.boostFuel > 0) {
             this.isBoosting = true;
             this.boostFuel = Math.max(0, this.boostFuel - 0.8);

@@ -25,8 +25,10 @@ class Game {
         this.wind = { x: 0, y: 0 };
         this.windTimer = 0;
         
-        // Stars collected this run
+        // Stars and bonuses collected this run
         this.starsCollected = 0;
+        this.moneyMultiplier = 1;
+        this.multiplierTimer = 0;
         
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -205,13 +207,45 @@ class Game {
         this.gameState.currentRun.distance = distance;
         this.gameState.currentRun.maxAltitude = Math.max(this.gameState.currentRun.maxAltitude, altitude);
         
-        // Check star collection
-        const collected = this.world.checkStarCollisions(this.player.body.position);
-        this.starsCollected += collected;
-        this.gameState.currentRun.starsCollected = this.starsCollected;
+        // Check collisions - returns { collected, multiplier, boost }
+        const collectionResult = this.world.checkStarCollisions(this.player.body.position);
+        
+        // Handle star collection
+        if (collectionResult.collected > 0) {
+            const earnedFromStars = collectionResult.collected * this.moneyMultiplier;
+            this.starsCollected += earnedFromStars;
+            this.gameState.currentRun.starsCollected = this.starsCollected;
+        }
+        
+        // Handle multiplier from cranes
+        if (collectionResult.multiplier > 0) {
+            this.moneyMultiplier += collectionResult.multiplier;
+            this.multiplierTimer = 300; // 5 seconds at 60fps
+        }
+        
+        // Decay multiplier over time
+        if (this.multiplierTimer > 0) {
+            this.multiplierTimer--;
+            if (this.multiplierTimer === 0) {
+                this.moneyMultiplier = 1;
+            }
+        }
+        
+        // Handle boost from shooting stars
+        if (collectionResult.boost) {
+            // Give a big speed boost!
+            const velocity = this.player.body.velocity;
+            const boostForce = 8;
+            Matter.Body.setVelocity(this.player.body, {
+                x: velocity.x + boostForce,
+                y: velocity.y - boostForce * 0.5
+            });
+            // Also refill some fuel
+            this.player.boostFuel = Math.min(this.player.boostFuel + 30, this.player.maxBoostFuel);
+        }
         
         // Money: distance + altitude bonus + stars
-        this.gameState.currentRun.moneyEarned = Math.floor(distance * 0.15) + Math.floor(altitude * 0.05) + (this.starsCollected * 10);
+        this.gameState.currentRun.moneyEarned = Math.floor(distance * 0.15) + Math.floor(altitude * 0.05) + this.starsCollected;
         
         const velocity = this.player.body.velocity;
         const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
@@ -248,6 +282,19 @@ class Game {
         
         if (this.isLaunching && this.gameState.state === 'launching') {
             this.renderLaunchTrajectory();
+        }
+        
+        // Show multiplier if active
+        if (this.moneyMultiplier > 1) {
+            this.ctx.save();
+            this.ctx.fillStyle = '#FF6B6B';
+            this.ctx.strokeStyle = '#8B0000';
+            this.ctx.lineWidth = 3;
+            this.ctx.font = 'bold 32px "Permanent Marker"';
+            const text = `${this.moneyMultiplier}x MULTIPLIER!`;
+            this.ctx.strokeText(text, this.canvas.width / 2 - 100, 120);
+            this.ctx.fillText(text, this.canvas.width / 2 - 100, 120);
+            this.ctx.restore();
         }
     }
     
@@ -325,6 +372,8 @@ class Game {
         }
         this.camera = { x: 0, y: 0 };
         this.starsCollected = 0;
+        this.moneyMultiplier = 1;
+        this.multiplierTimer = 0;
         this.wind = { x: 0, y: 0 };
         this.world.reset();
         this.startLaunchMode();
